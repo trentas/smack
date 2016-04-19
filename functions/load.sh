@@ -1,6 +1,6 @@
-#
-#
-
+# s.load.yaml arg1
+# load an yaml file and set environments with "s_config_" prefix
+# generates a warning if yaml file is not found
 function s.load.yaml() {
 	test -z "$*" && return
 	s.check.requirements? sed awk
