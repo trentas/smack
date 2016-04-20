@@ -5,3 +5,4 @@ TODO
 - Insert more example scripts
 - Create a "safe run" handler
 - Set a posix standard to scripts arguments
+- Create functions to do operations with a mysql
