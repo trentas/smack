@@ -1,11 +1,12 @@
-# process.sh
-#
-
+# s.process.run arg1...argN
+# Just runs a script
 s.process.run() {
 	test -z "$*" && return
 	source $@
 }
 
+# s.process.single
+# Creates PID files in the filesystem and avoids the same script to run simultaneously
 s.process.single() {
 	local current_pid=$$
 	local file_pid=$s_rundir/${s_scriptname}.pid
@@ -33,5 +34,3 @@ s.process.single() {
 		exit 2
 	fi
 }
-
-#

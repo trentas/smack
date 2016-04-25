@@ -1,6 +1,6 @@
-#
-#
-
+# s.set.colors
+# Define some colors with tput
+# FIXME: running without a tty (like in a cron job) tputs lacks the $TERM environment
 function s.set.colors() {
 	s.check.requirements? "tput"
 	s_color_bold=$(tput bold)
@@ -13,6 +13,8 @@ function s.set.colors() {
 	s_color_reset=$(tput sgr0)
 }
 
+# s.set.variables
+# Define some standard variables that can be overwritten with a yaml file
 function s.set.variables() {
 	s.check.requirements? "basename"
 	s_scriptname=$(basename $s_sourced_script)
@@ -26,8 +28,8 @@ function s.set.variables() {
 	fi
 }
 
+# s.set.verbose
+# The same as bash -x 
 function s.set.verbose() {
 	set -x
 }
-
-

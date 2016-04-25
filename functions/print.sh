@@ -1,6 +1,7 @@
-#
-#
-
+# s.print.log syslog_priority "message"
+# Choose one syslog priority such as debug, info, notice, warn or error and send to syslog and stdout
+# Wrong use of this function causes a fatal error
+# Thanks to http://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html
 function s.print.log() {
 	test -z "$*" && return
 	s.check.requirements? "logger"
@@ -29,7 +30,7 @@ function s.print.log() {
 		local color=$s_color_red
 		;;
 	*)
-		s.print.log error "Usage: s.print.log [debug|info|notice|error] message..."
+		s.print.log error "Usage: s.print.log [debug|info|notice|warn|error] message..."
 		exit 2
 		;;
 	esac
@@ -39,9 +40,10 @@ function s.print.log() {
 		return 1
 	fi
 	echo -e "$loglevel $s_scriptname:${FUNCNAME[0]:+${FUNCNAME[1]}:${BASH_LINENO[0]}} ${msg[*]}" | logger -p $s_config_syslog_facility.$1
-	# http://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html
 }
 
+# s.print.human_readable number_in_bytes
+# Convert a number to a human readable representation like numfmt
 function s.print.human_readable() {
 	b=${1:-0}
 	d=''
@@ -55,6 +57,8 @@ function s.print.human_readable() {
 	echo "$b$d${S[$s]}"
 }
 
+# s.print.loading1 
+# Prints a funny cursor dance
 function s.print.loading1() {
 	echo -ne "-.."\\r
 	sleep 0.15
@@ -66,6 +70,8 @@ function s.print.loading1() {
 	sleep 0.15
 }
 
+# s.print.loading2 
+# Prints a funny cursor dance
 function s.print.loading2() {
 	echo -ne "-"\\r
 	sleep 0.1
@@ -76,5 +82,3 @@ function s.print.loading2() {
 	echo -ne "/"\\r
 	sleep 0.1
 }
-
-
