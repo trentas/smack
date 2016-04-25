@@ -1,5 +1,6 @@
+#
 # smack my bash up bootstrap
-
+#
 
 function s._run() {
 	test -z "$*" && return
