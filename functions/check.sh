@@ -34,3 +34,12 @@ function s.check.os?() {
 	fi
 }
 
+# s.check.root? 
+# check if this script is running with superuser privileges
+# fatal error
+function s.check.root?() {
+	if [ ! $UID = "0" ]; then
+		s.print.log error "Only root can do that, $USER"
+		exit 2
+	fi
+}
