@@ -82,3 +82,11 @@ function s.print.loading2() {
 	echo -ne "/"\\r
 	sleep 0.1
 }
+
+# s.print.password characters
+# Prints a random generated password
+function s.print.password() {
+	local l=$1
+       	[ "$l" == "" ] && l=16
+      	tr -dc A-Za-z0-9_ < /dev/urandom | head -c ${l} | xargs
+}
