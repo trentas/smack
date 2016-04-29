@@ -85,6 +85,7 @@ function s.print.loading2() {
 
 # s.print.password characters
 # Prints a random generated password
+# FIXME: darwin tr is a mess
 function s.print.password() {
 	local l=$1
        	[ "$l" == "" ] && l=16
