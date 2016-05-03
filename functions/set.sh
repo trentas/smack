@@ -18,6 +18,8 @@ function s.set.colors() {
 function s.set.variables() {
 	s.check.requirements? "basename"
 	s_scriptname=$(basename $s_sourced_script)
+	s_stdout=/tmp/${s_scriptname}-stdout.$$
+	s_stderr=/tmp/${s_scriptname}-stderr.$$
 	s_rundir=/var/run
 	eval $(s.load.yaml ${s_args[1]})
 	if ! s.check.variable? "$s_config_debug"; then

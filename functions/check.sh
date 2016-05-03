@@ -31,6 +31,8 @@ function s.check.os?() {
 	if [ ! $(uname) = "Linux" -a ! $(uname) = "Darwin" ]; then
 		s.print.log error "Operating system $(uname) not supported"
 		exit 2
+	else
+		s_os=$(uname)
 	fi
 }
 

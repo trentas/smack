@@ -14,5 +14,7 @@ s.check.os?
 s.set.variables
 s.set.colors
 
+trap s.process.cleanup 0 1 2 9 11 15
+
 s._run "$@"
 
