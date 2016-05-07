@@ -43,7 +43,7 @@ function s.process.single() {
 function s.process.cleanup() {
 	exitcode=$?
 	local file_pid=$s_rundir/${s_scriptname}.pid
-	rm -f $file_pid $s_stdout $s_stderr
+	rm -f $file_pid $s_tmpdir
 	s.print.log debug "Exiting with code: $exitcode"
 	exit $exitcode
 }
