@@ -1,9 +1,9 @@
 # s.process.run arg1...argN
 # Just runs a script
 function s.process.run() {
-	test -z "$*" && return
-	s.print.log debug "running: $*"
-	$* > $s_stdout 2> $s_stderr
+	test -z "$@" && return
+	s.print.log debug "running: $@"
+	$@ > $s_stdout 2> $s_stderr
 	s.print.log debug "stdout: $(cat $s_stdout)"
 	s.print.log debug "stderr: $(cat $s_stderr)"	
 }
