@@ -33,7 +33,7 @@ function s.db.check.user?() {
 	local db_host=$2
 	local db_user=$3
 	local db_password=$4
-	local db_query="\"USE mysql\""
+	local db_query="USE mysql"
 	s.db.list.compat? $db_type || return $?
 	case $db_type in
 		mysql)
@@ -49,11 +49,11 @@ function s.db.check.user?() {
 			#blabla="$s_db_client -h $db_host -u $db_user -p$db_password --skip-column-names -e $db_query"
 			#eval $blabla
 			#s.process.run $blabla
-			s.process.run $s_db_client -h $db_host \
-						-u $db_user \
-						-p$db_password \
+			s.process.run $s_db_client -h "$db_host" \
+						-u "$db_user" \
+						"-p$db_password" \
 						--skip-column-names \
-						-e $db_query
+						-e "$db_query"
 			if [ $? -eq 0 ]; then
 				s.print.log info "Valid database user: $db_user"
 			else
