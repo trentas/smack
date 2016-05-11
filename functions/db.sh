@@ -1,6 +1,3 @@
-# Array with current database compatibility
-declare -a db_types=(mysql)
-
 # s.db.list.compat? db_type
 # Returns true if compatible with db_type, no args lists returns a list
 function s.db.list.compat?() {
@@ -26,9 +23,9 @@ function s.db.list.compat?() {
 
 # s.db.check.user? db_type db_host db_user db_password
 # Checks if db client exists and can connect to db server
-# fatal error
+# returns error if it doesn't exists
 function s.db.check.user?() {
-	test -z "$*" && return
+	test -z "$4" && return
 	local db_type=$1
 	local db_host=$2
 	local db_user=$3
@@ -46,12 +43,9 @@ function s.db.check.user?() {
 			else
 				s.check.os?
 			fi
-			#blabla="$s_db_client -h $db_host -u $db_user -p$db_password --skip-column-names -e $db_query"
-			#eval $blabla
-			#s.process.run $blabla
-			s.process.run $s_db_client -h "$db_host" \
-						-u "$db_user" \
-						"-p$db_password" \
+			s.process.run $s_db_client -h $db_host \
+						-u $db_user \
+						-p$db_password \
 						--skip-column-names \
 						-e "$db_query"
 			if [ $? -eq 0 ]; then
@@ -67,12 +61,13 @@ function s.db.check.user?() {
 # Checks if a database exists
 # returns error if it doesn't exists
 function s.db.check.database?() {
-	test -z "$*" && return
+	test -z "$5" && return
 	local db_type=$1
 	local db_host=$2
 	local db_user=$3
 	local db_password=$4
 	local db_name=$5
+	local db_query="USE $db_name"
 	s.db.list.compat? $db_type && return $?
 	s.db.check.user? $db_type $db_host $db_user $db_password && return $?
 	case $db_type in
@@ -81,7 +76,12 @@ function s.db.check.database?() {
 						-u $db_user \
 						-p$db_password \
 						--skip-column-names \
-						-e USE\ $db_name
+						-e "$db_query"
+			if [ $? -eq 0 ]; then
+				s.print.log info "Valid database name: $db_name"
+			else
+				s.print.log error "Can't connect with Mysql name $db_name"
+			fi
 			;;
 	esac
 }

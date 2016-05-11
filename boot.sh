@@ -7,6 +7,9 @@ function s._run() {
 	source "$@"
 }
 
+# Array with current database compatibility
+declare -a db_types=(mysql)
+
 s_sourced_script=$_
 s_args=($*)
 
