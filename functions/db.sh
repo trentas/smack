@@ -48,11 +48,13 @@ function s.db.check.user?() {
 						-p$db_password \
 						--skip-column-names \
 						-e "$db_query"
-			if [ $? -eq 0 ]; then
+			local exitcode=$?
+			if [ $exitcode -eq 0 ]; then
 				s.print.log info "Valid database user: $db_user"
 			else
 				s.print.log error "Can't connect with Mysql server with user $db_user"
 			fi		
+			return $exitcode
 			;;
 	esac
 }
@@ -77,11 +79,13 @@ function s.db.check.database?() {
 						-p$db_password \
 						--skip-column-names \
 						-e "$db_query"
-			if [ $? -eq 0 ]; then
+			local exitcode=$?
+			if [ $exitcode -eq 0 ]; then
 				s.print.log info "Valid database name: $db_name"
 			else
 				s.print.log error "Can't connect with Mysql name $db_name"
 			fi
+			return $exitcode
 			;;
 	esac
 }
@@ -114,11 +118,13 @@ function s.db.create.user() {
 				-u root \
 				-p$db_root_password \
 				-e "$db_query"
-			if [ $? -eq 0 ]; then
+			local exitcode=$?
+			if [ $exitcode -eq 0 ]; then
 				s.print.log info "Database user created: $db_user"
 			else
 				s.print.log error "Can't create database user: $db_user"
-			fi		
+			fi
+			return $exitcode
 			;;
 	esac
 }
