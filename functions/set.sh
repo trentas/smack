@@ -29,6 +29,8 @@ function s.set.variables() {
 	if ! s.check.variable? "$s_config_syslog_facility"; then
 		s_config_syslog_facility="local5"
 	fi
+	# Array with current database compatibility
+	s_db_types=(mysql)
 }
 
 # s.set.verbose

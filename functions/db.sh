@@ -3,13 +3,13 @@
 function s.db.list.compat?() {
 	local db_type
 	if [ -z $1 ]; then
-		for db_type in ${db_types[@]}
+		for db_type in ${s_db_types[@]}
 		do
 			echo $db_type
 		done
-		s.print.log debug "List of compatible databases: ${db_types[@]}"
+		s.print.log debug "List of compatible databases: ${s_db_types[@]}"
 	else
-		for db_type in ${db_types[@]}
+		for db_type in ${s_db_types[@]}
 		do
 			if [ "$db_type" == "$1" ]; then
 				s.print.log debug "Database $db_type is compatible"
@@ -68,8 +68,8 @@ function s.db.check.database?() {
 	local db_password=$4
 	local db_name=$5
 	local db_query="USE $db_name"
-	s.db.list.compat? $db_type && return $?
-	s.db.check.user? $db_type $db_host $db_user $db_password && return $?
+	s.db.list.compat? $db_type || return $?
+	s.db.check.user? $db_type $db_host $db_user $db_password || return $?
 	case $db_type in
 		mysql)
 			s.process.run mysql -h $db_host \
@@ -89,7 +89,38 @@ function s.db.check.database?() {
 # s.db.create.user db_type db_host db_root_password db_user db_password
 # Creates a user with a password in db server
 function s.db.create.user() {
-	test -z "$*" && return
+	test -z "$5" && return
+	local db_type=$1
+	local db_host=$2
+	local db_root_password=$3
+	local db_user=$4
+	local db_password=$5
+	local db_query="CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';"
+	s.db.list.compat? $db_type || return $?
+	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	case $db_type in
+		mysql)
+			if [ "$s_os" = "Linux" ]; then
+				s.check.requirements? "mysql"
+				s_db_client=mysql
+			elif [ "$s_os" = "Darwin" ]; then
+				s.check.requirements? "mysql5"
+				s_db_client=mysql5
+			else
+				s.check.os?
+			fi
+			s.process.run echo "$db_query" | $s_db_client \
+				-h $db_host \
+				-u $db_user \
+				-p$db_root_password \
+				--skip-column-names \
+			if [ $? -eq 0 ]; then
+				s.print.log info "Database user created: $db_user"
+			else
+				s.print.log error "Can't create database user: $db_user"
+			fi		
+			;;
+	esac
 }
 
 # s.db.create.database db_type db_host db_root_password db_name
