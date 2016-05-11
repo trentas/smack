@@ -109,10 +109,11 @@ function s.db.create.user() {
 			else
 				s.check.os?
 			fi
-			s.process.run echo "$db_query" | $s_db_client \
+			s.process.run $s_db_client \
 				-h $db_host \
 				-u root \
-				-p$db_root_password
+				-p$db_root_password \
+				-e "$db_query"
 			if [ $? -eq 0 ]; then
 				s.print.log info "Database user created: $db_user"
 			else
