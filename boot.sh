@@ -3,8 +3,8 @@
 #
 
 function s._run() {
-	test -z "$*" && return
-	source $@
+	test -z "$@" && return
+	source "$@"
 }
 
 s_sourced_script=$_
@@ -13,6 +13,7 @@ s_args=($*)
 s.check.os?
 s.set.variables
 s.set.colors
+mkdir -p $s_tmpdir
 
 trap s.process.cleanup 0 1 2 9 11 15
 

@@ -1,11 +1,17 @@
 # s.process.run arg1...argN
 # Just runs a script
 function s.process.run() {
-	test -z "$@" && return
+	test -z "$1" && return
 	s.print.log debug "running: $@"
-	$@ > $s_stdout 2> $s_stderr
-	s.print.log debug "stdout: $(cat $s_stdout)"
-	s.print.log debug "stderr: $(cat $s_stderr)"	
+	"$@" > $s_stdout 2> $s_stderr
+	local exitcode=$?
+	if [ -s $s_stdout ]; then
+		s.print.log debug "stdout: $(cat $s_stdout)"
+	fi
+	if [ -s $s_stderr ]; then
+		s.print.log debug "stderr: $(cat $s_stderr)"
+	fi
+	return $exitcode
 }
 
 # s.process.single
@@ -43,7 +49,7 @@ function s.process.single() {
 function s.process.cleanup() {
 	exitcode=$?
 	local file_pid=$s_rundir/${s_scriptname}.pid
-	rm -f $file_pid $s_tmpdir
+	rm -rf $file_pid $s_tmpdir
 	s.print.log debug "Exiting with code: $exitcode"
 	exit $exitcode
 }
