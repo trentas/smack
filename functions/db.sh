@@ -112,8 +112,7 @@ function s.db.create.user() {
 			s.process.run echo "$db_query" | $s_db_client \
 				-h $db_host \
 				-u $db_user \
-				-p$db_root_password \
-				--skip-column-names \
+				-p$db_root_password
 			if [ $? -eq 0 ]; then
 				s.print.log info "Database user created: $db_user"
 			else
