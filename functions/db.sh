@@ -132,7 +132,39 @@ function s.db.create.user() {
 # s.db.create.database db_type db_host db_root_password db_name
 # Creates a new database 
 function s.db.create.database() {
-	test -z "$*" && return
+	test -z "$4" && return
+	local db_type=$1
+	local db_host=$2
+	local db_root_password=$3
+	local db_name=$4
+	local db_query="CREATE DATABASE $db_name;"
+	s.db.list.compat? $db_type || return $?
+	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	case $db_type in
+		mysql)
+			if [ "$s_os" = "Linux" ]; then
+				s.check.requirements? "mysql"
+				s_db_client=mysql
+			elif [ "$s_os" = "Darwin" ]; then
+				s.check.requirements? "mysql5"
+				s_db_client=mysql5
+			else
+				s.check.os?
+			fi
+			s.process.run $s_db_client \
+				-h $db_host \
+				-u root \
+				-p$db_root_password \
+				-e "$db_query"
+			local exitcode=$?
+			if [ $exitcode -eq 0 ]; then
+				s.print.log info "Database  created: $db_name"
+			else
+				s.print.log error "Can't create database: $db_name"
+			fi
+			return $exitcode
+			;;
+	esac
 }
 
 # s.db.set.grants db_type db_host db_root_password db_name db_user grant1...grantN
