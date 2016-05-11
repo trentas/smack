@@ -95,7 +95,7 @@ function s.db.create.user() {
 	local db_root_password=$3
 	local db_user=$4
 	local db_password=$5
-	local db_query="CREATE USER '$db_user'@'localhost' IDENTIFIED BY '$db_password';"
+	local db_query="CREATE USER '$db_user'@'$db_host' IDENTIFIED BY '$db_password';"
 	s.db.list.compat? $db_type || return $?
 	s.db.check.user? $db_type $db_host root $db_root_password || return $?
 	case $db_type in
