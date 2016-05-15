@@ -14,8 +14,8 @@ build-smack:
 	mkdir dist/
 	echo "#!/usr/bin/env bash" > dist/smack
 	cat LICENSE | sed 's/^/# /' >> dist/smack
-	cat functions/* >> dist/smack
-	cat "boot.sh" >> dist/smack
+	cat functions/*.sksh >> dist/smack
+	cat "boot.sksh" >> dist/smack
 	chmod +x dist/smack
 
 clean:

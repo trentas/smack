@@ -1,8 +1,5 @@
 TODO
 
 - Write all needed documentation
-- Create a function to handle process signals and exit codes
 - Insert more example scripts
-- Create a "safe run" handler
 - Set a posix standard to scripts arguments
-- Create functions to do operations with a mysql
