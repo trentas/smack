@@ -214,16 +214,16 @@ function s.db.set.password() {
 	return $exitcode
 }
 
-# s.db.delete.grants db_type db_host db_root_password db_user db_name
+# s.db.delete.grants db_type db_host db_root_password db_name db_user
 # Revoke grants to a user
 function s.db.delete.grants() {
 	test -z "$5" && return
 	local db_type=$1
 	local db_host=$2
 	local db_root_password=$3
-	local db_user=$4
-	local db_name=$5
-	local db_query="REVOKE ALL PRIVILEGES ON ${db_name}.* FROM '$db_user'@'$db_host'); FLUSH PRIVILEGES;"
+	local db_name=$4
+	local db_user=$5
+	local db_query="REVOKE ALL PRIVILEGES ON ${db_name}.* FROM '$db_user'@'$db_host'; FLUSH PRIVILEGES;"
 	s.db.list.compat? $db_type || return $?
 	s.db.check.user? $db_type $db_host root $db_root_password || return $?
 	case $db_type in
@@ -295,9 +295,9 @@ function s.db.delete.database() {
 			;;
 	esac
 	if [ $exitcode -eq 0 ]; then
-		s.print.log info "Database removed: ${db_user}@${db_host}"
+		s.print.log info "Database removed: $db_name"
 	else
-		s.print.log error "Can't remove database: ${db_user}@${db_host}"
+		s.print.log error "Can't remove database: $db_name"
 	fi
 	return $exitcode
 }
