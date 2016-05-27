@@ -3,7 +3,7 @@
 #
 
 function s._run() {
-	test -z "$@" && return
+	test -z "$1" && return
 	source "$@"
 }
 

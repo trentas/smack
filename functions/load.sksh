@@ -3,15 +3,14 @@
 # generates a warning if yaml file is not found
 # Thanks to https://github.com/pkuczynski
 function s.load.yaml() {
-	test -z "$*" && return
-	s.check.requirements? sed awk
 	if [ ! -s "$1" ]; then
-		s.print.log debug "YAML file not found"
+		s.print.log error "YAML file not found"
 		return 2
 	fi
+	s.check.requirements? sed awk
 	local prefix="s_config_"
 	local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
-	sed -ne "s|^\($s\):|\1|" \
+	eval $(sed -ne "s|^\($s\):|\1|" \
 		-e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
 		-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
 	awk -F$fs '{
@@ -22,6 +21,6 @@ function s.load.yaml() {
 				vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
 				printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
 			}
-	}'
+	}')
 }
 
