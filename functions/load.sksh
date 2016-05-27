@@ -1,11 +1,11 @@
 # s.load.yaml arg1
 # load an yaml file and set environments with "s_config_" prefix
-# generates a warning if yaml file is not found
+# generates fatal error if yaml file is not found
 # Thanks to https://github.com/pkuczynski
 function s.load.yaml() {
 	if [ ! -s "$1" ]; then
 		s.print.log error "YAML file not found"
-		return 2
+		exit 2
 	fi
 	s.check.requirements? sed awk
 	local prefix="s_config_"
