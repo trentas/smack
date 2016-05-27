@@ -24,6 +24,30 @@ function s.check.variable?() {
 	fi
 }
 
+# s.check.directory? arg1
+# check if directory exists
+# returns an exit code 2 if not found
+# bash is so beautifully crazy that true is zero
+function s.check.directory?() {
+	if [ -d "$1" ]; then
+		return 2
+	else
+		return 0
+	fi
+}
+
+# s.check.file? arg1
+# check if file exists (and not empty)
+# returns an exit code 2 if not found
+# bash is so beautifully crazy that true is zero
+function s.check.file?() {
+	if [ -s "$1" ]; then
+		return 2
+	else
+		return 0
+	fi
+}
+
 # s.check.os? 
 # check if this script is running from a mac or linux box. (no windows 10 support yet!)
 # fatal error
