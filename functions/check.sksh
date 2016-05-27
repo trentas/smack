@@ -30,9 +30,9 @@ function s.check.variable?() {
 # bash is so beautifully crazy that true is zero
 function s.check.directory?() {
 	if [ -d "$1" ]; then
-		return 2
-	else
 		return 0
+	else
+		return 2
 	fi
 }
 
@@ -42,9 +42,9 @@ function s.check.directory?() {
 # bash is so beautifully crazy that true is zero
 function s.check.file?() {
 	if [ -s "$1" ]; then
-		return 2
-	else
 		return 0
+	else
+		return 2
 	fi
 }
 
