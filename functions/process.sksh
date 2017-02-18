@@ -36,7 +36,7 @@ function s.process.single() {
 		s.print.log debug "PID file not found"
 	fi
 	if [ -w $s_rundir ]; then
-		s.print.log info "Creating PID file"
+		s.print.log info "Creating PID file ($current_pid)"
 		echo $current_pid > $file_pid
 	else
 		s.print.log error "Directory $s_rundir not writeable, cant write PID file"
