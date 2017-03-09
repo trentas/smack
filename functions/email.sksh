@@ -1,0 +1,15 @@
+# s.email.send
+# Send an email from stdin
+function s.email.send() {
+	test -z "$*" && return
+	s.check.requirements? "mail"
+	if ! s.check.variable? "$s_config_email_address"; then
+		s.print.log error "You need to set email:address variable before sending email"
+	fi
+
+	local email_subject="$*"
+
+	s.print.log debug "Sending email to $s_config_email_address"
+	s.process.run mail -s "$email_subject" $s_config_email_address
+}
+
