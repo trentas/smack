@@ -11,5 +11,13 @@ function s.email.send() {
 
 	s.print.log debug "Sending email to $s_config_email_address"
 	s.process.run mail -s "$email_subject" $s_config_email_address
+
+	local exitcode=$?
+	if [ $exitcode -eq 0 ]; then
+		s.print.log info "Email to $s_config_email_address sent sucessfully"
+	else
+		s.print.log error "Error sending email to $s_config_email_address"
+	fi		
+	return $exitcode
 }
 
