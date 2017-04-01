@@ -48,8 +48,13 @@ function s.process.single() {
 # clean the mess and exit
 function s.process.cleanup() {
 	exitcode=$?
+	local current_pid=$$
 	local file_pid=$s_rundir/${s_scriptname}.pid
-	rm -rf $file_pid $s_tmpdir
+	if [ "$current_pid" = "$(cat $file_pid)" ]; then
+		rm -rf $file_pid
+		exit 0
+	fi
+	rm -rf $s_tmpdir
 	s.print.log debug "Exiting with code: $exitcode"
 	exit $exitcode
 }
