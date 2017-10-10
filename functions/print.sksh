@@ -23,7 +23,7 @@ function s.print.log() {
 		;;
 	warn)
 		local loglevel="WARN  "
-		local color=$s_color_tan
+		local color=$s_color_yellow
 		;;
 	error)
 		local loglevel="ERROR "

@@ -2,14 +2,17 @@
 # Define some colors with tput
 function s.set.colors() {
 	s.check.requirements? "tput"
-	s_color_bold=$(tput -T vt100 bold)
+	if ! s.check.variable? "TERM"; then
+		return 0
+	fi
 	s_color_underline=$(tput -T vt100 sgr 0 1)
-	s_color_purple=$(tput -T vt100 setaf 171)
-	s_color_red=$(tput -T vt100 setaf 1)
-	s_color_green=$(tput -T vt100 setaf 76)
-	s_color_tan=$(tput -T vt100 setaf 3)
-	s_color_blue=$(tput -T vt100 setaf 38)
-	s_color_reset=$(tput -T vt100 sgr0)
+	s_color_bold=$'\x1b[97m'
+	s_color_purple=$'\x1b[95m'
+	s_color_red=$'\x1b[31m'
+	s_color_green=$'\x1b[92m'
+	s_color_yellow=$'\x1b[93m'
+	s_color_blue=$'\x1b[94m'
+	s_color_reset=$'\x1b[0m'
 }
 
 # s.set.variables
