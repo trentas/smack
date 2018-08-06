@@ -5,6 +5,7 @@ function s.email.send() {
 	s.check.requirements? "mail"
 	if ! s.check.variable? "$s_config_email_address"; then
 		s.print.log error "You need to set email:address variable before sending email"
+		return 2
 	fi
 
 	local email_subject="$*"

@@ -42,6 +42,58 @@ function s.print.log() {
 	echo -e "$loglevel $s_scriptname:${FUNCNAME[0]:+${FUNCNAME[1]}:${BASH_LINENO[0]}} ${msg[*]}" | logger -p $s_config_syslog_facility.$1
 }
 
+# s.print.slack syslog_priority "message"
+# Choose one syslog priority such as debug, info, notice, warn or error and send to syslog and stdout
+function s.print.slack() {
+	test -z "$*" && return
+	local msg=($*)
+	unset msg[0]
+	test -z "${msg[*]}" && return
+	if ! s.check.variable? "$s_config_slack_url"; then
+		s.print.log error "You need to set slack:url variable before using slack functions"
+		return 2
+	fi
+	if ! s.check.variable? "$s_config_slack_channel"; then
+		s.print.log error "You need to set slack:channel variable before using slack functions"
+		return 2
+	fi
+	case $1 in
+	debug)
+		local color="good"
+		local emoji=$s_emoji_debug
+		;;
+	info)
+		local color="good"
+		local emoji=$s_emoji_info
+		;;
+	notice)
+		local color="warning"
+		local emoji=$s_emoji_notice
+		;;
+	warn)
+		local color="warning"
+		local emoji=$s_emoji_warn
+		;;
+	error)
+		local color="danger"
+		local emoji=$s_emoji_error
+		;;
+	*)
+		s.print.log error "Usage: s.slack.log [debug|info|notice|warn|error] message..."
+		exit 2
+		;;
+	esac
+	local escaped_text=$(echo ${emoji}" "${msg[*]} | sed 's/"/\"/g' | sed "s/'/\'/g")
+	local json="{\"channel\": \"$s_config_slack_channel\", \
+		\"as_user\":\"false\", \
+		\"username\":\"$s_scriptname\", \
+		\"icon_emoji\":\":robot_face:\", \
+		\"attachments\":[{\
+			\"color\":\"$color\", \
+			\"text\": \"$escaped_text\"}]}"
+	curl -s -d "payload=$json" "$s_config_slack_url"
+}
+
 # s.print.human_readable number_in_bytes
 # Convert a number to a human readable representation like numfmt
 function s.print.human_readable() {

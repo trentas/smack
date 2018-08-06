@@ -15,6 +15,14 @@ function s.set.colors() {
 	s_color_reset=$'\x1b[0m'
 }
 
+function s.set.emojis() {
+	s_emoji_debug=":book:"
+	s_emoji_info=":large_blue_diamond:"
+	s_emoji_notice=":large_orange_diamond:"
+	s_emoji_warn=":warning:"
+	s_emoji_error=":x:"
+}
+
 # s.set.variables
 # Define some standard variables that can be overwritten with a yaml file
 function s.set.variables() {
