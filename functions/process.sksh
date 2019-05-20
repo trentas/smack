@@ -28,7 +28,7 @@ function s.process.single() {
 			exit 0
 		elif [ ! "$pid_running" = "" ]; then
 			s.print.log notice "Process $s_scriptname is already running with PID $pid_running"
-			exit 0
+			exit 2
 		else
 			s.print.log error "Stalled PID File, overwriting"
 		fi
@@ -36,7 +36,7 @@ function s.process.single() {
 		s.print.log debug "PID file not found"
 	fi
 	if [ -w $s_rundir ]; then
-		s.print.log info "Creating PID file ($current_pid)"
+		s.print.log info "Creating PID file $file_pid with PID $current_pid"
 		echo $current_pid > $file_pid
 	else
 		s.print.log error "Directory $s_rundir not writeable, cant write PID file"
@@ -50,9 +50,19 @@ function s.process.cleanup() {
 	exitcode=$?
 	local current_pid=$$
 	local file_pid=$s_rundir/${s_scriptname}.pid
-	if [ "$current_pid" = "$(cat $file_pid)" ]; then
-		rm -rf $file_pid
-		exit 0
+	if [ -s $file_pid ]; then
+		if [ "$current_pid" = "$(cat $file_pid)" ]; then
+			s.print.log debug "Removing $file_pid"
+			rm -rf $file_pid
+			exit 0
+		else
+			local pid_running=$(ps aux | awk '{ print $2 }' | grep -F $(cat $file_pid))
+			if [ "$pid_running" = "" ]; then
+				s.print.log info "Stale PID file in $file_pid, remove manually"
+			fi
+		fi
+	else
+		s.print.log debug "PID file $file_pid doesn't exist"
 	fi
 	rm -rf $s_tmpdir
 	s.print.log debug "Exiting with code: $exitcode"
