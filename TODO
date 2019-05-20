@@ -3,3 +3,4 @@ TODO
 - Write all needed documentation
 - Insert more example scripts
 - Set a posix standard to scripts arguments
+- Create a function to run X processes in parallel with `wait`
