@@ -1,0 +1,118 @@
+#!/usr/bin/env smack
+# Requires Smack: https://github.com/trentas/smack/
+
+# Check files integrity from a directory (20220730)
+
+
+# Enable shell in verbose mode
+# s.set.verbose
+
+function init.script() {
+	s.process.single
+	s.check.requirements? find zip 7z pdftotext pngcheck jpeginfo unrar xmllint transmission-show sqlite3 zstd
+
+	if s.check.variable? ${s_args[1]}; then
+		#FIXME: using a different directory from current bugs find list
+		current_directory=${s_args[1]}
+	else
+		current_directory="."
+	fi
+
+	if ! s.check.directory? "$current_directory/.crc/"; then
+		s.print.log info "Creating checksum directory in $current_directory/.crc/"
+		if ! mkdir -p "$current_directory/.crc/" > /dev/null 2>&1 ; then
+			s.print.log error "Cannot create checksum directory, aborting..."
+			exit 2
+		fi
+	else
+		s.print.log info "Checksum directory already exists in $current_directory/.crc/"
+	fi
+
+	if s.check.file? "$current_directory/.crc/error.log"; then
+		s.print.log info "Removing old error log file at $current_directory/.crc/error.log"
+		if ! rm -f $current_directory/.crc/error.log > /dev/null 2>&1; then
+			s.print.log error "Cannot remove old error log file at $current_directory/.crc/error.log"
+			exit 2
+		fi
+	else
+		s.print.log info "Error log not found at $current_directory/.crc/error.log"
+	fi
+}
+
+function main.function() {
+	while read line
+	do
+		file_extension=$(echo "$line" | awk -F\. '{ print $NF }')
+		if ! s.check.directory? "$current_directory/.crc/$line"; then
+			s.print.log info "$file_extension file: [test] $line"
+			case $file_extension in
+				zip|ZIP)
+					unzip -t -qq "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				7z|7Z)
+					7z t "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				pdf|PDF)
+					pdftotext -q "$line" - > /dev/null
+					persist.result $? "$line"
+					;;
+				png|PNG)
+					pngcheck -q "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				jpg|JPG|jpeg|JPEG)
+					jpeginfo "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				rar|RAR)
+					unrar t "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				xml|XML)
+					xmllint --noout "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				torrent|TORRENT)
+					transmission-show "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				sqlite|SQLITE)
+					sqlite3 "$line" "PRAGMA integrity_check" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				zst|ZST)
+					zstd -t "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
+				*)
+					s.print.log info "$file_extension file: [skip] $line"
+					;;
+			esac
+		fi
+	done
+}
+
+persist.result() {
+	if [ "$1" = "0" ]; then
+		s.print.log info "$file_extension file: [pass] $line"
+	elif [ "$1" = "1" -a "$file_extension" = "zip" ]; then
+		s.print.log notice "$file_extension file: [warn] $line"
+	else
+		s.print.log error "$file_extension file: [erro] $line"
+		echo "$line" >> $current_directory/.crc/error.log
+		return
+	fi
+
+	if mkdir -p "$current_directory/.crc/$line" > /dev/null 2>&1; then
+		s.print.log info "$file_extension file: [stor] $line"
+	else
+		s.print.log error "Cannot create checksum directory ($current_directory/.crc/$line), aborting..."
+		exit 2
+	fi
+}
+
+init.script
+
+find $current_directory -type f 2> /dev/null | main.function
