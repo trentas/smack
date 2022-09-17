@@ -60,7 +60,7 @@ function s.check.writable?() {
 }
 
 # s.check.os 
-# check if this script is running from a mac or linux box. (no windows 10 support yet!)
+# check if this script is running from a mac or linux box (no windows support yet!), and checks shell version
 # fatal error
 function s.check.os() {
 	if [ ! $(uname) = "Linux" -a ! $(uname) = "Darwin" ]; then
@@ -68,6 +68,10 @@ function s.check.os() {
 		exit 2
 	else
 		s_os=$(uname)
+	fi
+	if [ $BASH_VERSINFO -lt 5 ]; then
+		s.print.log error "Minimum bash version required to run smack is 5"
+		exit 2
 	fi
 }
 
