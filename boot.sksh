@@ -10,7 +10,7 @@ function s._run() {
 s_sourced_script=$_
 s_args=($*)
 
-s.check.os?
+s.check.os
 s.set.variables
 s.set.colors
 s.set.emojis

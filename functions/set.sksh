@@ -31,7 +31,20 @@ function s.set.variables() {
 	s_tmpdir=/tmp/${s_scriptname}.$$
 	s_stdout=$s_tmpdir/stdout
 	s_stderr=$s_tmpdir/stderr
-	s_rundir=/var/run
+	if s.check.directory? "/var/run"; then
+		if s.check.writable? "/var/run"; then
+			s_rundir=/var/run
+		fi
+	fi
+	if ! s.check.variable? "$s_rundir"; then
+		if mkdir -p ~/.smack > /dev/null 2>&1; then
+			s_rundir=~/.smack
+		else
+			exit 2
+		fi
+	else
+		exit 2
+	fi
 	if ! s.check.variable? "$s_config_debug"; then
 		s_config_debug="yes"
 	fi

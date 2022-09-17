@@ -48,10 +48,21 @@ function s.check.file?() {
 	fi
 }
 
-# s.check.os? 
+# s.check.writable? arg1
+# check if file or directory is writable
+# returns an exit code 2 if not found
+function s.check.writable?() {
+	if [ -w "$1" ]; then
+		return 0
+	else
+		return 2
+	fi
+}
+
+# s.check.os 
 # check if this script is running from a mac or linux box. (no windows 10 support yet!)
 # fatal error
-function s.check.os?() {
+function s.check.os() {
 	if [ ! $(uname) = "Linux" -a ! $(uname) = "Darwin" ]; then
 		s.print.log error "Operating system $(uname) not supported"
 		exit 2
@@ -60,10 +71,10 @@ function s.check.os?() {
 	fi
 }
 
-# s.check.root? 
+# s.check.root 
 # check if this script is running with superuser privileges
 # fatal error
-function s.check.root?() {
+function s.check.root() {
 	if [ ! $UID = "0" ]; then
 		s.print.log error "Only root can do that, $USER"
 		exit 2
