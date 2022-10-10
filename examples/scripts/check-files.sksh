@@ -9,7 +9,7 @@
 
 function init.script() {
 	s.process.single
-	s.check.requirements? find zip 7z pdftotext pngcheck jpeginfo unrar xmllint transmission-show sqlite3 zstd
+	s.check.requirements? find zip 7z pdftotext pngcheck jpeginfo unrar xmllint transmission-show sqlite3 zstd tidy
 
 	if s.check.variable? ${s_args[1]}; then
 		#FIXME: using a different directory from current bugs find list
@@ -86,6 +86,10 @@ function main.function() {
 					zstd -t "$line" > /dev/null 2>&1
 					persist.result $? "$line"
 					;;
+				html|HTML)
+					tidy -q -e "$line" > /dev/null 2>&1
+					persist.result $? "$line"
+					;;
 				*)
 					s.print.log info "$file_extension file: [skip] $line"
 					;;
@@ -98,6 +102,8 @@ persist.result() {
 	if [ "$1" = "0" ]; then
 		s.print.log info "$file_extension file: [pass] $line"
 	elif [ "$1" = "1" -a "$file_extension" = "zip" ]; then
+		s.print.log notice "$file_extension file: [warn] $line"
+	elif [ "$1" = "1" -a "$file_extension" = "html" ]; then
 		s.print.log notice "$file_extension file: [warn] $line"
 	else
 		s.print.log error "$file_extension file: [erro] $line"
