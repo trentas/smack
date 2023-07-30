@@ -42,8 +42,6 @@ function s.set.variables() {
 		else
 			exit 2
 		fi
-	else
-		exit 2
 	fi
 	if ! s.check.variable? "$s_config_debug"; then
 		s_config_debug="yes"
