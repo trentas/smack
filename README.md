@@ -76,13 +76,12 @@ s.process.run "echo Hello"
 | `s.set.emojis`              | Defines emoji shortcuts for user-friendly logs                             |
 | `s.set.variables`           | Loads default/global environment variables                                 |
 | `s.set.verbose`             | Enables or disables verbose mode                                           |
-| `s._run`                    | Internal runner wrapper (likely not meant to be used directly)             |
 
 ---
 
 ## 📂 Examples
 
-You can create a `demo.sh` like this:
+You can create a `demo.sksh` like this:
 
 ```bash
 #!/usr/bin/env smack
