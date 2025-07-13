@@ -1,22 +1,25 @@
 prefix ?= /usr/local
+bindir := $(prefix)/bin
+distfile := dist/smack
 
-all: build-smack
+all: build
 
-install: install-smack
+build: $(distfile)
 
-dist: build-smack
+install: build
+	install -Dm755 $(distfile) $(bindir)/smack
 
-install-smack:
-	-mkdir -p $(prefix)/bin
-	cp dist/smack $(prefix)/bin/smack
+uninstall:
+	rm -f $(bindir)/smack
 
-build-smack:
-	mkdir dist/
-	echo "#!/usr/bin/env bash" > dist/smack
-	cat LICENSE | sed 's/^/# /' >> dist/smack
-	cat functions/*.sksh >> dist/smack
-	cat "boot.sksh" >> dist/smack
-	chmod +x dist/smack
+$(distfile): boot.sksh $(wildcard functions/*.sksh) LICENSE
+	@mkdir -p dist
+	@echo "#!/usr/bin/env bash" > $(distfile)
+	@sed 's/^/# /' LICENSE >> $(distfile)
+	@cat functions/*.sksh >> $(distfile)
+	@cat boot.sksh >> $(distfile)
+	@chmod +x $(distfile)
 
 clean:
-	@-rm -rf dist/
+	@rm -rf dist
+
