@@ -4,7 +4,7 @@
 function s.check.requirements?() {
 	test -z "$*" && return
 	while [ -n "$1" ]; do
-		if ! which "$1" &> /dev/null; then
+		if ! command -v "$1" &> /dev/null; then
 			s.print.log error "Fatal: $1 not found or permission denied"
 			exit 2
 		fi
@@ -63,13 +63,13 @@ function s.check.writable?() {
 # check if this script is running from a mac or linux box (no windows support yet!), and checks shell version
 # fatal error
 function s.check.os() {
-	if [ ! $(uname) = "Linux" -a ! $(uname) = "Darwin" ]; then
+	if [ "$(uname)" != "Linux" ] && [ "$(uname)" != "Darwin" ]; then
 		s.print.log error "Operating system $(uname) not supported"
 		exit 2
 	else
 		s_os=$(uname)
 	fi
-	if [ $BASH_VERSINFO -lt 5 ]; then
+	if [ "${BASH_VERSINFO:-0}" -lt 5 ]; then
 		s.print.log error "Minimum bash version required to run smack is 5"
 		exit 2
 	fi
@@ -79,7 +79,7 @@ function s.check.os() {
 # check if this script is running with superuser privileges
 # fatal error
 function s.check.root() {
-	if [ ! $UID = "0" ]; then
+	if [ "$UID" != "0" ]; then
 		s.print.log error "Only root can do that, $USER"
 		exit 2
 	fi

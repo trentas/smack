@@ -2,7 +2,7 @@
 # Returns true if compatible with db_type, no args lists returns a list
 function s.db.list.compat?() {
 	local db_type
-	if [ -z $1 ]; then
+	if [ -z "$1" ]; then
 		for db_type in ${s_db_types[@]}
 		do
 			echo $db_type
