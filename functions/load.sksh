@@ -10,17 +10,38 @@ function s.load.yaml() {
 	s.check.requirements? sed awk
 	local prefix="s_config_"
 	local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
-	eval $(sed -ne "s|^\($s\):|\1|" \
+	
+	# Parse YAML into variable assignments
+	local parsed_output=$(sed -ne "s|^\($s\):|\1|" \
 		-e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-		-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
-	awk -F$fs '{
-			indent = length($1)/2;
-			vname[indent] = $2;
-			for (i in vname) {if (i > indent) {delete vname[i]}}
-			if (length($3) > 0) {
-				vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
-				printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
-			}
+		-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  "$1" |
+	awk -F"$fs" '{
+		indent = length($1)/2;
+		vname[indent] = $2;
+		for (i in vname) {if (i > indent) {delete vname[i]}}
+		if (length($3) > 0) {
+			vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+			printf("export %s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+		}
 	}')
+	
+	# Validate output before eval to prevent code injection
+	# Only allow lines matching: export variable_name="value"
+	# Reject dangerous patterns: command substitution, subshells, semicolons, pipes, etc
+	if echo "$parsed_output" | grep -qE '(\$\(|`|;|\||&|>|<|\{|\}|\[|\])'; then
+		s.print.log error "YAML file contains potentially dangerous content"
+		exit 2
+	fi
+	
+	# Validate that all lines match safe variable assignment pattern (allow empty output)
+	if [ -n "$parsed_output" ]; then
+		# Update regex to match "export variable="value""
+		if echo "$parsed_output" | grep -vE '^export [a-zA-Z_][a-zA-Z0-9_]*="[^"]*"$' | grep -q .; then
+			s.print.log error "YAML parsing produced invalid variable assignments"
+			exit 2
+		fi
+	fi
+	
+	# Safe to eval now
+	eval "$parsed_output"
 }
-
