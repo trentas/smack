@@ -33,9 +33,9 @@ function s.load.yaml() {
 		exit 2
 	fi
 	
-	# Validate that all lines match safe variable assignment pattern
-	if ! echo "$parsed_output" | grep -qE '^[a-zA-Z_][a-zA-Z0-9_]*="[^"]*"$'; then
-		if [ -n "$parsed_output" ]; then
+	# Validate that all lines match safe variable assignment pattern (allow empty output)
+	if [ -n "$parsed_output" ]; then
+		if echo "$parsed_output" | grep -vE '^[a-zA-Z_][a-zA-Z0-9_]*="[^"]*"$' | grep -q .; then
 			s.print.log error "YAML parsing produced invalid variable assignments"
 			exit 2
 		fi

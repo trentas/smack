@@ -154,8 +154,12 @@ function s.db.create.user() {
 	
 	# Validate inputs
 	s.db.sanitize? "$db_user" "username" || return $?
+	s.db.sanitize? "$db_host" "hostname" || return $?
 	
-	local db_query="CREATE USER '$db_user'@'$db_host' IDENTIFIED BY '$db_password'; FLUSH PRIVILEGES;"
+	# Escape single quotes in password to prevent SQL injection
+	local escaped_password="${db_password//\'/\'\'}"
+	
+	local db_query="CREATE USER '$db_user'@'$db_host' IDENTIFIED BY '$escaped_password'; FLUSH PRIVILEGES;"
 	s.db.list.compat? $db_type || return $?
 	s.db.check.user? $db_type $db_host root $db_root_password || return $?
 	case $db_type in
@@ -223,6 +227,7 @@ function s.db.set.grants() {
 	# Validate inputs
 	s.db.sanitize? "$db_name" "database" || return $?
 	s.db.sanitize? "$db_user" "username" || return $?
+	s.db.sanitize? "$db_host" "hostname" || return $?
 	s.db.sanitize? "$db_grants" "grants" || return $?
 	
 	local db_query="GRANT $db_grants ON ${db_name}.* TO '$db_user'@'$db_host'; FLUSH PRIVILEGES;"
@@ -257,11 +262,15 @@ function s.db.set.password() {
 	local db_user=$4
 	local db_password=$5
 	
-	# Validate username
+	# Validate inputs
 	s.db.sanitize? "$db_user" "username" || return $?
+	s.db.sanitize? "$db_host" "hostname" || return $?
+	
+	# Escape single quotes in password to prevent SQL injection
+	local escaped_password="${db_password//\'/\'\'}"
 	
 	# Use ALTER USER instead of deprecated PASSWORD() function (MySQL 8.0+ compatible)
-	local db_query="ALTER USER '$db_user'@'$db_host' IDENTIFIED BY '$db_password'; FLUSH PRIVILEGES;"
+	local db_query="ALTER USER '$db_user'@'$db_host' IDENTIFIED BY '$escaped_password'; FLUSH PRIVILEGES;"
 	s.db.list.compat? $db_type || return $?
 	s.db.check.user? $db_type $db_host root $db_root_password || return $?
 	case $db_type in
@@ -295,6 +304,7 @@ function s.db.delete.grants() {
 	# Validate inputs
 	s.db.sanitize? "$db_name" "database" || return $?
 	s.db.sanitize? "$db_user" "username" || return $?
+	s.db.sanitize? "$db_host" "hostname" || return $?
 	
 	local db_query="REVOKE ALL PRIVILEGES ON ${db_name}.* FROM '$db_user'@'$db_host'; FLUSH PRIVILEGES;"
 	s.db.list.compat? $db_type || return $?
@@ -326,8 +336,9 @@ function s.db.delete.user() {
 	local db_root_password=$3
 	local db_user=$4
 	
-	# Validate username
+	# Validate inputs
 	s.db.sanitize? "$db_user" "username" || return $?
+	s.db.sanitize? "$db_host" "hostname" || return $?
 	
 	local db_query="DROP USER '$db_user'@'$db_host'; FLUSH PRIVILEGES;"
 	s.db.list.compat? $db_type || return $?

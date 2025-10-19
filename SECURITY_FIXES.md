@@ -32,36 +32,75 @@ MYSQL_PWD="$password" mysql -u root -e "..."
 ### 2. SQL Injection Prevention (CRITICAL)
 **Problem**: User inputs were directly interpolated into SQL queries without validation or escaping.
 
-**Solution**: New `s.db.sanitize?` function validates all database-related inputs:
+**Solution**: Comprehensive multi-layer protection:
+
+**Layer 1 - Input Validation**: New `s.db.sanitize?` function validates all database-related inputs:
 - **Usernames/Databases**: Only alphanumeric + underscore, max 64 chars
 - **Hostnames**: Valid FQDN or IP address format
 - **Grants**: Only uppercase SQL keywords
 
 ```bash
-# Usage
+# All functions now validate ALL inputs including hostnames
 s.db.sanitize? "$db_user" "username" || return $?
 s.db.sanitize? "$db_name" "database" || return $?
 s.db.sanitize? "$db_host" "hostname" || return $?
 s.db.sanitize? "$db_grants" "grants" || return $?
 ```
 
-All database functions now validate inputs before executing queries.
+**Layer 2 - Password Escaping**: Passwords can contain special characters legitimately, so they are escaped instead of validated:
+```bash
+# Escape single quotes in passwords using SQL standard method
+local escaped_password="${db_password//\'/\'\'}"
+# Single quote becomes two single quotes: ' becomes ''
+```
+
+**Example attack prevented**:
+```bash
+# Malicious password: p@ssw0rd' OR '1'='1
+# After escaping: p@ssw0rd'' OR ''1''=''1
+# SQL sees this as a literal string, not code
+```
+
+All database functions now:
+1. Validate usernames, database names, hostnames, and grants
+2. Escape passwords before use in SQL queries
+3. Use proper quoting throughout
 
 ---
 
-### 3. YAML Code Injection Prevention (HIGH)
+### 3. YAML Code Injection Prevention (CRITICAL)
 **Problem**: The YAML parser used `eval` on parsed output without validation, allowing arbitrary code execution through malicious YAML files.
 
-**Solution**: Added validation before `eval`:
-1. Parses YAML into variable assignments
-2. Checks for dangerous patterns: `$(`, backticks, semicolons, pipes, etc.
-3. Validates that all lines match safe variable assignment pattern: `variable="value"`
-4. Only then executes `eval`
+**Solution**: Added comprehensive two-stage validation before `eval`:
 
+**Stage 1**: Checks for dangerous patterns in parsed output:
 ```bash
-# Rejects malicious content like:
-# value: "$(rm -rf /)"
-# value: "; cat /etc/passwd"
+# Rejects: $(, backticks, semicolons, pipes, redirects, braces, brackets
+if echo "$parsed_output" | grep -qE '(\$\(|`|;|\||&|>|<|\{|\}|\[|\])'; then
+    s.print.log error "YAML file contains potentially dangerous content"
+    exit 2
+fi
+```
+
+**Stage 2**: Ensures **ALL** lines match safe variable assignment pattern:
+```bash
+# Uses grep -vE to find lines that DON'T match, then checks if any exist
+# This ensures EVERY line matches variable="value" format
+if [ -n "$parsed_output" ]; then
+    if echo "$parsed_output" | grep -vE '^[a-zA-Z_][a-zA-Z0-9_]*="[^"]*"$' | grep -q .; then
+        s.print.log error "YAML parsing produced invalid variable assignments"
+        exit 2
+    fi
+fi
+```
+
+This two-stage approach prevents bypasses where attackers mix valid and malicious content:
+```yaml
+# This attack is now blocked:
+safe_key: "valid"
+evil: "$(rm -rf /)"  # Stage 1 catches $(
+mixed: "value; rm -rf /"  # Stage 1 catches ;
+invalid: value'  # Stage 2 ensures proper format
 ```
 
 ---
@@ -124,6 +163,68 @@ SET PASSWORD FOR 'user'@'host' = PASSWORD('pass');
 -- After (MySQL 5.7+ compatible)
 ALTER USER 'user'@'host' IDENTIFIED BY 'pass';
 ```
+
+---
+
+## Bugs Found and Fixed During Code Review
+
+### 7. YAML Validation Bypass (CRITICAL)
+**Problem**: Initial YAML validation at line 37 used `grep -qE` which only verified if **any** line matched the safe pattern, not if **all** lines matched. This allowed attackers to mix valid and malicious content:
+
+```yaml
+safe_key: "valid"          # This line passes validation
+evil: "$(rm -rf /)"        # This malicious line bypasses validation!
+```
+
+**Solution**: Changed validation logic to use inverted match (`grep -vE`) to find lines that DON'T match, ensuring ALL lines are safe:
+
+```bash
+# BEFORE (VULNERABLE)
+if ! echo "$parsed_output" | grep -qE '^[a-zA-Z_][a-zA-Z0-9_]*="[^"]*"$'; then
+    # Only checks if ANY line matches - INSECURE!
+fi
+
+# AFTER (SECURE)
+if echo "$parsed_output" | grep -vE '^[a-zA-Z_][a-zA-Z0-9_]*="[^"]*"$' | grep -q .; then
+    # Finds lines that DON'T match, fails if any found - SECURE!
+    s.print.log error "YAML parsing produced invalid variable assignments"
+    exit 2
+fi
+```
+
+### 8. Missing Hostname Validation in Database Functions (CRITICAL)
+**Problem**: While the initial security fixes added `s.db.sanitize?` for usernames and database names, several functions were missing hostname validation before using `$db_host` in SQL queries. This allowed SQL injection through malicious hostnames:
+
+```bash
+# Attack: Pass hostname as: localhost'; DROP DATABASE mysql; --
+CREATE USER 'user'@'localhost'; DROP DATABASE mysql; --' IDENTIFIED BY 'pass';
+```
+
+**Solution**: Added hostname validation to all functions that build SQL queries:
+- `s.db.create.user` (line 157)
+- `s.db.set.grants` (line 230)
+- `s.db.set.password` (line 267)
+- `s.db.delete.grants` (line 307)
+- `s.db.delete.user` (line 341)
+
+### 9. Unescaped Passwords in SQL Queries (CRITICAL)
+**Problem**: Password parameters were inserted directly into SQL queries without escaping. Single quotes in passwords would break SQL syntax and potentially allow injection:
+
+```bash
+# Password: pass' OR '1'='1
+CREATE USER 'user'@'host' IDENTIFIED BY 'pass' OR '1'='1';  # SQL injection!
+```
+
+**Solution**: Added password escaping using SQL standard method (single quote becomes two single quotes):
+```bash
+local escaped_password="${db_password//\'/\'\'}"
+# pass' OR '1'='1  becomes  pass'' OR ''1''=''1
+# SQL treats this as a literal string, not executable code
+```
+
+Applied to:
+- `s.db.create.user` (line 160)
+- `s.db.set.password` (line 270)
 
 ---
 
