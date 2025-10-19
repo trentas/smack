@@ -1,5 +1,6 @@
 # s.email.send
 # Send an email from stdin
+# Subject line is properly escaped to prevent command injection
 function s.email.send() {
 	test -z "$*" && return
 	s.check.requirements? "mail"
@@ -9,13 +10,30 @@ function s.email.send() {
 	fi
 
 	local email_subject="$*"
+	
+	# Validate email address format
+	if ! echo "$s_config_email_address" | grep -qE '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'; then
+		s.print.log error "Invalid email address format: $s_config_email_address"
+		return 2
+	fi
+	
+	# Remove potentially dangerous characters from subject line
+	# This prevents command injection through the subject parameter
+	email_subject="${email_subject//\$/\\$}"  # Escape dollar signs
+	email_subject="${email_subject//\`/}"     # Remove backticks
+	email_subject="${email_subject//\(/}"     # Remove parentheses
+	email_subject="${email_subject//\)/}"
+	email_subject="${email_subject//;/}"      # Remove semicolons
+	email_subject="${email_subject//|/}"      # Remove pipes
+	email_subject="${email_subject//&/}"      # Remove ampersands
 
 	s.print.log debug "Sending email to $s_config_email_address"
-	s.process.run mail -s "$email_subject" $s_config_email_address
+	# Use proper quoting to prevent word splitting and globbing
+	s.process.run mail -s "$email_subject" "$s_config_email_address"
 
 	local exitcode=$?
 	if [ $exitcode -eq 0 ]; then
-		s.print.log info "Email to $s_config_email_address sent sucessfully"
+		s.print.log info "Email to $s_config_email_address sent successfully"
 	else
 		s.print.log error "Error sending email to $s_config_email_address"
 	fi		

@@ -44,6 +44,7 @@ function s.print.log() {
 
 # s.print.slack syslog_priority "message"
 # Choose one syslog priority such as debug, info, notice, warn or error and send to syslog and stdout
+# Sends message to Slack webhook with proper error handling and security
 function s.print.slack() {
 	test -z "$*" && return
 	local msg=($*)
@@ -57,6 +58,13 @@ function s.print.slack() {
 		s.print.log error "You need to set slack:channel variable before using slack functions"
 		return 2
 	fi
+	
+	# Validate Slack webhook URL format
+	if ! echo "$s_config_slack_url" | grep -qE '^https://hooks\.slack\.com/'; then
+		s.print.log error "Invalid Slack webhook URL format"
+		return 2
+	fi
+	
 	case $1 in
 	debug)
 		local color="good"
@@ -83,7 +91,9 @@ function s.print.slack() {
 		exit 2
 		;;
 	esac
-	local escaped_text=$(echo ${emoji}" "${msg[*]} | sed 's/"/\"/g' | sed "s/'/\'/g")
+	
+	# Properly escape JSON content
+	local escaped_text=$(echo ${emoji}" "${msg[*]} | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\'/g")
 	local json="{\"channel\": \"$s_config_slack_channel\", \
 		\"as_user\":\"false\", \
 		\"username\":\"$s_scriptname\", \
@@ -91,7 +101,24 @@ function s.print.slack() {
 		\"attachments\":[{\
 			\"color\":\"$color\", \
 			\"text\": \"$escaped_text\"}]}"
-	curl -s -d "payload=$json" "$s_config_slack_url"
+	
+	# Send to Slack with proper timeout, SSL verification, and error handling
+	local response=$(curl --max-time 10 \
+		--silent \
+		--show-error \
+		--fail \
+		--request POST \
+		--header "Content-Type: application/json" \
+		--data "payload=$json" \
+		"$s_config_slack_url" 2>&1)
+	
+	local exitcode=$?
+	if [ $exitcode -ne 0 ]; then
+		s.print.log error "Failed to send Slack notification: $response"
+		return 2
+	fi
+	
+	return 0
 }
 
 # s.print.human_readable number_in_bytes
