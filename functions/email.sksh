@@ -1,3 +1,7 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2211  # Function names with ? are valid in bash
+# shellcheck disable=SC2154  # Variables set in set.sksh (s_config_email_address)
+
 # s.email.send
 # Send an email from stdin
 # Subject line is properly escaped to prevent command injection

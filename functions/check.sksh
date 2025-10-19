@@ -1,3 +1,6 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2211  # Function names with ? are valid in bash
+
 # s.check.requirements? arg1...argN
 # check if one or a set of executable files exist
 # fatal error
@@ -67,6 +70,7 @@ function s.check.os() {
 		s.print.log error "Operating system $(uname) not supported"
 		exit 2
 	else
+		# shellcheck disable=SC2034  # s_os used in other modules
 		s_os=$(uname)
 	fi
 	if [ "${BASH_VERSINFO:-0}" -lt 5 ]; then

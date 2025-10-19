@@ -1,3 +1,8 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2211  # Function names with ? are valid in bash
+# shellcheck disable=SC2034  # Variables exported for use in other modules
+# shellcheck disable=SC2154  # s_sourced_script set in boot.sksh
+
 # s.set.colors
 # Define some colors with tput
 function s.set.colors() {
@@ -27,7 +32,7 @@ function s.set.emojis() {
 # Define some standard variables that can be overwritten with a yaml file
 function s.set.variables() {
 	s.check.requirements? "basename"
-	s_scriptname=$(basename $s_sourced_script)
+	s_scriptname=$(basename "$s_sourced_script")
 	s_tmpdir=/tmp/${s_scriptname}.$$
 	s_stdout=$s_tmpdir/stdout
 	s_stderr=$s_tmpdir/stderr

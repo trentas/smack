@@ -1,3 +1,7 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2211  # Function names with ? are valid in bash
+# shellcheck disable=SC2154  # Variables set in other modules (s_os, s_db_types, s_db_client)
+
 # s.db.sanitize? value type
 # Validates and sanitizes database-related inputs to prevent SQL injection
 # type: username, database, hostname, grants
@@ -42,13 +46,13 @@ function s.db.sanitize?() {
 function s.db.list.compat?() {
 	local db_type
 	if [ -z "$1" ]; then
-		for db_type in ${s_db_types[@]}
+		for db_type in "${s_db_types[@]}"
 		do
-			echo $db_type
+			echo "$db_type"
 		done
-		s.print.log debug "List of compatible databases: ${s_db_types[@]}"
+		s.print.log debug "List of compatible databases: ${s_db_types[*]}"
 	else
-		for db_type in ${s_db_types[@]}
+		for db_type in "${s_db_types[@]}"
 		do
 			if [ "$db_type" == "$1" ]; then
 				s.print.log debug "Database $db_type is compatible"
@@ -88,23 +92,23 @@ function s.db.check.user?() {
 	s.db.sanitize? "$db_host" "hostname" || return $?
 	s.db.sanitize? "$db_user" "username" || return $?
 	
-	s.db.list.compat? $db_type || return $?
+	s.db.list.compat? "$db_type" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_password" s.process.run $s_db_client -h $db_host \
-						-u $db_user \
+			MYSQL_PWD="$db_password" s.process.run "$s_db_client" -h "$db_host" \
+						-u "$db_user" \
 						--skip-column-names \
 						-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Valid database user: $db_user"
 	else
 		s.print.log error "Can't connect with database server with user $db_user"
 	fi		
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.check.database? db_type db_host db_user db_password db_name
@@ -122,24 +126,24 @@ function s.db.check.database?() {
 	# Validate database name
 	s.db.sanitize? "$db_name" "database" || return $?
 	
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host $db_user $db_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" "$db_user" "$db_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_password" s.process.run $s_db_client -h $db_host \
-						-u $db_user \
+			MYSQL_PWD="$db_password" s.process.run "$s_db_client" -h "$db_host" \
+						-u "$db_user" \
 						--skip-column-names \
 						-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Valid database name: $db_name"
 	else
 		s.print.log error "Can't connect with database name $db_name"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.create.user db_type db_host db_root_password db_user db_password
@@ -160,24 +164,24 @@ function s.db.create.user() {
 	local escaped_password="${db_password//\'/\'\'}"
 	
 	local db_query="CREATE USER '$db_user'@'$db_host' IDENTIFIED BY '$escaped_password'; FLUSH PRIVILEGES;"
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" root "$db_root_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_root_password" s.process.run $s_db_client \
-				-h $db_host \
+			MYSQL_PWD="$db_root_password" s.process.run "$s_db_client" \
+				-h "$db_host" \
 				-u root \
 				-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Database user created: $db_user"
 	else
 		s.print.log error "Can't create database user: $db_user"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.create.database db_type db_host db_root_password db_name
@@ -193,24 +197,24 @@ function s.db.create.database() {
 	s.db.sanitize? "$db_name" "database" || return $?
 	
 	local db_query="CREATE DATABASE $db_name;"
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" root "$db_root_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_root_password" s.process.run $s_db_client \
-				-h $db_host \
+			MYSQL_PWD="$db_root_password" s.process.run "$s_db_client" \
+				-h "$db_host" \
 				-u root \
 				-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Database created: $db_name"
 	else
 		s.print.log error "Can't create database: $db_name"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.set.grants db_type db_host db_root_password db_name db_user "grant1,grantN"
@@ -231,24 +235,24 @@ function s.db.set.grants() {
 	s.db.sanitize? "$db_grants" "grants" || return $?
 	
 	local db_query="GRANT $db_grants ON ${db_name}.* TO '$db_user'@'$db_host'; FLUSH PRIVILEGES;"
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" root "$db_root_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_root_password" s.process.run $s_db_client \
-				-h $db_host \
+			MYSQL_PWD="$db_root_password" s.process.run "$s_db_client" \
+				-h "$db_host" \
 				-u root \
 				-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Grants created to user: ${db_user}@${db_host}"
 	else
 		s.print.log error "Can't create grants to user: ${db_user}@${db_host}"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.set.password db_type db_host db_root_password db_user db_password
@@ -271,24 +275,24 @@ function s.db.set.password() {
 	
 	# Use ALTER USER instead of deprecated PASSWORD() function (MySQL 8.0+ compatible)
 	local db_query="ALTER USER '$db_user'@'$db_host' IDENTIFIED BY '$escaped_password'; FLUSH PRIVILEGES;"
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" root "$db_root_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_root_password" s.process.run $s_db_client \
-				-h $db_host \
+			MYSQL_PWD="$db_root_password" s.process.run "$s_db_client" \
+				-h "$db_host" \
 				-u root \
 				-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Password changed for user: ${db_user}@${db_host}"
 	else
 		s.print.log error "Can't change password for user: ${db_user}@${db_host}"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.delete.grants db_type db_host db_root_password db_name db_user
@@ -307,24 +311,24 @@ function s.db.delete.grants() {
 	s.db.sanitize? "$db_host" "hostname" || return $?
 	
 	local db_query="REVOKE ALL PRIVILEGES ON ${db_name}.* FROM '$db_user'@'$db_host'; FLUSH PRIVILEGES;"
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" root "$db_root_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_root_password" s.process.run $s_db_client \
-				-h $db_host \
+			MYSQL_PWD="$db_root_password" s.process.run "$s_db_client" \
+				-h "$db_host" \
 				-u root \
 				-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Removed privileges for user: ${db_user}@${db_host}"
 	else
 		s.print.log error "Can't remove privileges for user: ${db_user}@${db_host}"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.delete.user db_type db_host db_root_password db_user
@@ -341,24 +345,24 @@ function s.db.delete.user() {
 	s.db.sanitize? "$db_host" "hostname" || return $?
 	
 	local db_query="DROP USER '$db_user'@'$db_host'; FLUSH PRIVILEGES;"
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" root "$db_root_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_root_password" s.process.run $s_db_client \
-				-h $db_host \
+			MYSQL_PWD="$db_root_password" s.process.run "$s_db_client" \
+				-h "$db_host" \
 				-u root \
 				-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "User removed: ${db_user}@${db_host}"
 	else
 		s.print.log error "Can't remove user: ${db_user}@${db_host}"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
 
 # s.db.delete.database db_type db_host db_root_password db_name
@@ -374,22 +378,22 @@ function s.db.delete.database() {
 	s.db.sanitize? "$db_name" "database" || return $?
 	
 	local db_query="DROP DATABASE $db_name; FLUSH PRIVILEGES;"
-	s.db.list.compat? $db_type || return $?
-	s.db.check.user? $db_type $db_host root $db_root_password || return $?
+	s.db.list.compat? "$db_type" || return $?
+	s.db.check.user? "$db_type" "$db_host" root "$db_root_password" || return $?
 	case $db_type in
 		mysql)
 			# Use MYSQL_PWD environment variable to avoid password in process list
-			MYSQL_PWD="$db_root_password" s.process.run $s_db_client \
-				-h $db_host \
+			MYSQL_PWD="$db_root_password" s.process.run "$s_db_client" \
+				-h "$db_host" \
 				-u root \
 				-e "$db_query"
 			local exitcode=$?
 			;;
 	esac
-	if [ $exitcode -eq 0 ]; then
+	if [ "$exitcode" -eq 0 ]; then
 		s.print.log info "Database removed: $db_name"
 	else
 		s.print.log error "Can't remove database: $db_name"
 	fi
-	return $exitcode
+	return "$exitcode"
 }
