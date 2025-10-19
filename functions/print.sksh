@@ -1,3 +1,7 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2211  # Function names with ? are valid in bash
+# shellcheck disable=SC2154  # Variables set in set.sksh and used here (s_color_*, s_emoji_*, s_config_*, s_scriptname)
+
 # s.print.log syslog_priority "message"
 # Choose one syslog priority such as debug, info, notice, warn or error and send to syslog and stdout
 # Wrong use of this function causes a fatal error
@@ -5,8 +9,9 @@
 function s.print.log() {
 	test -z "$*" && return
 	s.check.requirements? "logger"
+	# shellcheck disable=SC2206  # Intentional word splitting for message array
 	local msg=($*)
-	unset msg[0]
+	unset 'msg[0]'
 	test -z "${msg[*]}" && return
 	case $1 in
 	debug)
@@ -39,7 +44,7 @@ function s.print.log() {
 	elif [ "$1" = "debug" ]; then 
 		return 1
 	fi
-	echo -e "$loglevel $s_scriptname:${FUNCNAME[0]:+${FUNCNAME[1]}:${BASH_LINENO[0]}} ${msg[*]}" | logger -p $s_config_syslog_facility.$1
+	echo -e "$loglevel $s_scriptname:${FUNCNAME[0]:+${FUNCNAME[1]}:${BASH_LINENO[0]}} ${msg[*]}" | logger -p "$s_config_syslog_facility.$1"
 }
 
 # s.print.slack syslog_priority "message"
@@ -47,13 +52,16 @@ function s.print.log() {
 # Sends message to Slack webhook with proper error handling and security
 function s.print.slack() {
 	test -z "$*" && return
+	# shellcheck disable=SC2206  # Intentional word splitting for message array
 	local msg=($*)
-	unset msg[0]
+	unset 'msg[0]'
 	test -z "${msg[*]}" && return
+	# shellcheck disable=SC2154  # s_config_slack_url set by user config
 	if ! s.check.variable? "$s_config_slack_url"; then
 		s.print.log error "You need to set slack:url variable before using slack functions"
 		return 2
 	fi
+	# shellcheck disable=SC2154  # s_config_slack_channel set by user config
 	if ! s.check.variable? "$s_config_slack_channel"; then
 		s.print.log error "You need to set slack:channel variable before using slack functions"
 		return 2
@@ -93,7 +101,8 @@ function s.print.slack() {
 	esac
 	
 	# Properly escape JSON content
-	local escaped_text=$(echo ${emoji}" "${msg[*]} | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+	local escaped_text
+	escaped_text=$(echo "${emoji}" "${msg[*]}" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed "s/'/\\'/g")
 	local json="{\"channel\": \"$s_config_slack_channel\", \
 		\"as_user\":\"false\", \
 		\"username\":\"$s_scriptname\", \
@@ -103,7 +112,8 @@ function s.print.slack() {
 			\"text\": \"$escaped_text\"}]}"
 	
 	# Send to Slack with proper timeout, SSL verification, and error handling
-	local response=$(curl --max-time 10 \
+	local response
+	response=$(curl --max-time 10 \
 		--silent \
 		--show-error \
 		--fail \
@@ -131,7 +141,7 @@ function s.print.human_readable() {
 	while ((b > 1024)); do
 		d="$(printf ".%02d" $((b % 1024 * 100 / 1024)))"
 		b=$((b / 1024))
-		let s++
+		(( s++ ))
 	done
 	echo "$b$d${S[$s]}"
 }
@@ -168,5 +178,5 @@ function s.print.loading2() {
 function s.print.password() {
 	local l=$1
        	[ "$l" == "" ] && l=16
-      	tr -dc A-Za-z0-9_ < /dev/urandom | head -c ${l} | xargs
+      	tr -dc A-Za-z0-9_ < /dev/urandom | head -c "${l}" | xargs
 }

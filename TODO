@@ -1,6 +1,257 @@
-TODO
+TODO - Smack Improvements
 
-- Write all needed documentation
-- Insert more example scripts
-- Set a posix standard to scripts arguments
-- Create a function to run X processes in parallel with `wait`
+================================================================================
+PHASE 0 - CRITICAL (Fix First)
+================================================================================
+
+[X] Fix all shellcheck warnings and errors
+    - Run shellcheck on all .sksh files in functions/
+    - Run shellcheck on boot.sksh
+    - Run shellcheck on example scripts
+    - Ensure zero errors and warnings before proceeding
+    - Address quoting issues, unused variables, and best practices
+    
+    COMPLETED: All 200+ shellcheck issues fixed!
+    - Added shell directives to all .sksh files
+    - Fixed critical errors (trap signals, array assignments)
+    - Quoted all variables to prevent word splitting
+    - Fixed array handling and expansion issues
+    - Separated variable declarations from assignments
+    - Added appropriate suppression directives for cross-module variables
+    - Fixed deprecated test operators (-a to &&)
+    - Fixed command substitution quoting
+    - Fixed style issues (let to (()), read -r)
+    - dist/smack now passes shellcheck with zero errors/warnings
+
+================================================================================
+PHASE 1 - HIGH PRIORITY
+================================================================================
+
+Testing Infrastructure
+----------------------
+[ ] Implement BATS (Bash Automated Testing System) testing framework
+    - Install and configure BATS
+    - Create tests/ directory structure
+    - Add test files for each function module:
+      * tests/test_check.bats
+      * tests/test_db.bats
+      * tests/test_email.bats
+      * tests/test_load.bats
+      * tests/test_print.bats
+      * tests/test_process.bats
+      * tests/test_set.bats
+
+[ ] Security validation tests
+    - Test SQL injection prevention with malicious inputs
+    - Test YAML parsing with code injection attempts
+    - Test email command injection scenarios
+    - Test database password handling (ensure not visible in process list)
+    - Test all input validation functions with edge cases
+
+[ ] CI/CD integration
+    - Create .github/workflows/test.yml for automated testing
+    - Add shellcheck linting to CI pipeline
+    - Add test coverage reporting
+    - Update Makefile with 'test' target
+
+New Features - Core
+-------------------
+[ ] Implement parallel processing function (functions/parallel.sksh)
+    - Create s.parallel.run function to execute commands in parallel
+    - Use background jobs with wait for synchronization
+    - Add configurable max concurrent jobs
+    - Include progress tracking and error aggregation
+    - Example: s.parallel.run 4 "process_file" file1.txt file2.txt ...
+
+[ ] Add enhanced check functions (functions/check.sksh)
+    - s.check.requirements? - validate required commands exist
+    - s.check.variable? - validate environment variables
+    - s.check.directory? - verify directory existence and permissions
+    - s.check.file? - verify file existence and permissions
+    - s.check.port? - check if network port is available/listening
+    - s.check.url? - validate URL accessibility
+
+Code Quality
+------------
+[ ] Set POSIX standard for script arguments
+    - Implement consistent argument parsing across all functions
+    - Support both positional and named arguments (--user=value)
+    - Add --help flag to all functions
+    - Standardize return codes (0=success, 1=error, 2=invalid input)
+
+Documentation & Examples
+------------------------
+[ ] Write comprehensive example scripts
+    - Database backup script with rotation
+    - Log aggregation and notification script
+    - System health check with Slack alerts
+    - Batch processing with parallel execution
+    - Configuration management example
+    (Goal: 5+ real-world example scripts)
+
+================================================================================
+PHASE 2 - MEDIUM PRIORITY
+================================================================================
+
+Database Support
+----------------
+[ ] Implement PostgreSQL support (functions/pg.sksh)
+    - Add PostgreSQL equivalent functions:
+      * s.pg.create.user
+      * s.pg.create.database
+      * s.pg.set.password
+      * s.pg.set.grants
+      * s.pg.delete.* functions
+    - Use PGPASSWORD environment variable for secure password handling
+    - Implement input sanitization similar to MySQL functions
+
+Reliability Features
+--------------------
+[ ] Add retry logic with backoff (functions/retry.sksh)
+    - Implement s.retry.exponential for exponential backoff retries
+    - Implement s.retry.linear for linear backoff retries
+    - Add configurable max attempts and timeout
+    - Include logging for retry attempts
+
+[ ] HTTP client functions (functions/http.sksh)
+    - Add s.http.get, s.http.post with proper error handling
+    - Include timeout and retry support
+    - Add header and authentication support
+    - Validate SSL certificates by default
+
+Documentation
+-------------
+[ ] Write all needed documentation
+    - Create docs/ directory
+    - Add individual markdown files for each function category:
+      * docs/check-functions.md
+      * docs/db-functions.md
+      * docs/email-functions.md
+      * docs/load-functions.md
+      * docs/print-functions.md
+      * docs/process-functions.md
+      * docs/set-functions.md
+    - Include usage examples, parameters, return codes, security notes
+
+[ ] Create tutorial documentation
+    - docs/getting-started.md with step-by-step tutorial
+    - docs/best-practices.md for secure scripting patterns
+    - docs/migration-guide.md for users upgrading from older versions
+
+Version Management
+------------------
+[ ] Add version management
+    - Add version string to distributed binary
+    - Implement smack --version command
+    - Add semantic versioning
+    - Create CHANGELOG.md
+
+================================================================================
+PHASE 3 - LOW PRIORITY
+================================================================================
+
+Additional Utilities
+--------------------
+[ ] Rate limiting functionality
+    - Add s.ratelimit.check to enforce rate limits on operations
+    - Track operation timestamps in temporary files
+    - Configurable time windows and max operations
+
+[ ] Secret management integration
+    - Add support for HashiCorp Vault integration
+    - Add support for AWS Secrets Manager
+    - Add support for environment-based secrets (.env files)
+    - Function: s.secret.get <secret_name>
+
+[ ] JSON/YAML processing utilities
+    - Add s.json.get <file> <key> to extract JSON values
+    - Add s.yaml.get <file> <key> to extract YAML values (using yq)
+    - Maintain security validations from existing YAML parser
+
+[ ] File operations utilities
+    - Add s.file.backup <file> with rotation support
+    - Add s.file.lock <file> for exclusive file locking
+    - Add s.file.temp to create secure temporary files
+    - Add s.file.checksum <file> for integrity verification
+
+Enhanced Error Handling
+-----------------------
+[ ] Improve error handling
+    - Implement set -euo pipefail where appropriate
+    - Add detailed error messages with context
+    - Improve error recovery mechanisms
+    - Add s.error.handler function for centralized error handling
+
+Performance Optimization
+------------------------
+[ ] Performance improvements
+    - Review and optimize PID file checking in s.process.single
+    - Cache frequently accessed values (OS detection, etc.)
+    - Reduce subprocess spawning where possible
+    - Add benchmarking utilities
+
+Security Enhancements
+---------------------
+[ ] Security audit logging
+    - Add s.audit.log <action> <details> for security-sensitive operations
+    - Write to syslog and/or dedicated audit file
+    - Include timestamp, user, and action details
+    - Make audit logging configurable
+
+[ ] Enhanced input validation framework
+    - Create centralized validation library
+    - Add more validators: email, URL, IP address, port number
+    - Support custom regex patterns
+    - Improve error messages for validation failures
+
+[ ] Implement secure defaults
+    - Secure by default configuration
+    - Add option to disable features via environment variables
+    - Document security implications of each function
+    - Add security warnings for dangerous operations
+
+Distribution
+------------
+[ ] Package distribution
+    - Create Homebrew formula for macOS
+    - Create Debian/Ubuntu package
+    - Create RPM package for Red Hat/CentOS
+    - Publish to package managers
+
+[ ] Installation improvements
+    - Support installation to custom directories
+    - Add user-level installation option (~/.local/bin)
+    - Create installation script with dependency checks
+    - Add uninstallation verification
+
+Code Documentation
+------------------
+[ ] Add function headers
+    - Add standardized comment headers to all functions
+    - Include: description, parameters, return values, examples, security notes
+    - Format for easy extraction to documentation
+
+[ ] Inline code comments
+    - Add explanatory comments for complex logic
+    - Document security considerations inline
+    - Add TODO/FIXME markers for future improvements
+
+================================================================================
+SUCCESS METRICS
+================================================================================
+
+- All shellcheck errors and warnings resolved
+- Test coverage > 80%
+- All functions have comprehensive documentation
+- At least 10 example scripts demonstrating various use cases
+- Zero critical security issues in static analysis
+- Package available in at least 2 package managers
+- Positive community feedback and contributions
+
+================================================================================
+NOTES
+================================================================================
+
+Priority order should be followed to ensure code quality (shellcheck fixes)
+before adding new features. Security and testing are critical for production
+readiness. All new features should include tests and documentation.

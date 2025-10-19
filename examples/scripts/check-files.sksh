@@ -1,4 +1,7 @@
 #!/usr/bin/env smack
+# shellcheck shell=bash
+# shellcheck disable=SC2211  # Function names with ? are valid in bash
+# shellcheck disable=SC2154  # s_args set by smack bootstrap
 # Requires Smack: https://github.com/trentas/smack/
 
 # Check files integrity from a directory (20220730)
@@ -11,7 +14,7 @@ function init.script() {
 	s.process.single
 	s.check.requirements? find zip 7z pdftotext pngcheck jpeginfo unrar xmllint transmission-show sqlite3 zstd tidy
 
-	if s.check.variable? ${s_args[1]}; then
+	if s.check.variable? "${s_args[1]}"; then
 		#FIXME: using a different directory from current bugs find list
 		current_directory=${s_args[1]}
 	else
@@ -30,7 +33,7 @@ function init.script() {
 
 	if s.check.file? "$current_directory/.crc/error.log"; then
 		s.print.log info "Removing old error log file at $current_directory/.crc/error.log"
-		if ! rm -f $current_directory/.crc/error.log > /dev/null 2>&1; then
+		if ! rm -f "$current_directory/.crc/error.log" > /dev/null 2>&1; then
 			s.print.log error "Cannot remove old error log file at $current_directory/.crc/error.log"
 			exit 2
 		fi
@@ -40,7 +43,7 @@ function init.script() {
 }
 
 function main.function() {
-	while read line
+	while read -r line
 	do
 		file_extension=$(echo "$line" | awk -F\. '{ print $NF }')
 		if ! s.check.directory? "$current_directory/.crc/$line"; then
@@ -101,13 +104,13 @@ function main.function() {
 persist.result() {
 	if [ "$1" = "0" ]; then
 		s.print.log info "$file_extension file: [pass] $line"
-	elif [ "$1" = "1" -a "$file_extension" = "zip" ]; then
+	elif [ "$1" = "1" ] && [ "$file_extension" = "zip" ]; then
 		s.print.log notice "$file_extension file: [warn] $line"
-	elif [ "$1" = "1" -a "$file_extension" = "html" ]; then
+	elif [ "$1" = "1" ] && [ "$file_extension" = "html" ]; then
 		s.print.log notice "$file_extension file: [warn] $line"
 	else
 		s.print.log error "$file_extension file: [erro] $line"
-		echo "$line" >> $current_directory/.crc/error.log
+		echo "$line" >> "$current_directory/.crc/error.log"
 		return
 	fi
 
@@ -121,4 +124,4 @@ persist.result() {
 
 init.script
 
-find $current_directory -type f 2> /dev/null | main.function
+find "$current_directory" -type f 2> /dev/null | main.function

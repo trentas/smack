@@ -1,3 +1,6 @@
+# shellcheck shell=bash
+# shellcheck disable=SC2211  # Function names with ? are valid in bash
+
 # s.load.yaml arg1
 # load an yaml file and set environments with "s_config_" prefix
 # generates fatal error if yaml file is not found
@@ -9,12 +12,17 @@ function s.load.yaml() {
 	fi
 	s.check.requirements? sed awk
 	local prefix="s_config_"
-	local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+	local s='[[:space:]]*'
+	local w='[a-zA-Z0-9_]*'
+	local fs
+	fs=$(echo @|tr @ '\034')
 	
 	# Parse YAML into variable assignments
-	local parsed_output=$(sed -ne "s|^\($s\):|\1|" \
-		-e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-		-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  "$1" |
+	local parsed_output
+	# shellcheck disable=SC1087  # Complex sed pattern with end-of-line anchor
+	parsed_output=$(sed -ne "s|^\($s\):|\1|" \
+		-e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\\1$fs\\2$fs\\3|p" \
+		-e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\\1$fs\\2$fs\\3|p"  "$1" |
 	awk -F"$fs" '{
 		indent = length($1)/2;
 		vname[indent] = $2;
